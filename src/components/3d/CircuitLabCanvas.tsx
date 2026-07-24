@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { CircuitPhysicsEngine } from '../../engine/CircuitPhysicsEngine';
 import type { CircuitSubMode } from '../../engine/CircuitPhysicsEngine';
@@ -33,6 +33,10 @@ export const CircuitLabCanvas: React.FC<CircuitLabCanvasProps> = ({
   const electronsMeshRef = useRef<THREE.InstancedMesh | null>(null);
 
   const electronProgressRef = useRef<number[]>([]);
+
+  // Probes
+  const [probePlaced, setProbePlaced] = useState(false);
+  const voltmeterRef = useRef<THREE.Mesh | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -108,6 +112,14 @@ export const CircuitLabCanvas: React.FC<CircuitLabCanvasProps> = ({
     circuitGroup.add(bulbMesh);
     bulbGlowMeshRef.current = bulbMesh;
 
+    // Probes
+    const vmGeo = new THREE.BoxGeometry(2, 2, 2);
+    const vmMat = new THREE.MeshStandardMaterial({color: 0x00ff00});
+    const vmM = new THREE.Mesh(vmGeo, vmMat);
+    vmM.position.set(0, 5, 0);
+    circuitGroup.add(vmM);
+    voltmeterRef.current = vmM;
+
     // Moving Electrons Instanced Mesh
     const eGeo = new THREE.SphereGeometry(0.5, 16, 16);
     const eMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
@@ -139,7 +151,6 @@ export const CircuitLabCanvas: React.FC<CircuitLabCanvasProps> = ({
       circuitGroup.visible = mode !== 'ChargesAndFields';
 
       if (mode === 'ChargesAndFields') {
-        // Rebuild 3D Point Charge Meshes & Field Vectors
         chargesGroup.clear();
         fieldArrowsGroup.clear();
 
@@ -154,7 +165,6 @@ export const CircuitLabCanvas: React.FC<CircuitLabCanvasProps> = ({
           chargesGroup.add(qMesh);
         }
 
-        // 3D Vector Field Grid
         for (let x = -25; x <= 25; x += 10) {
           for (let z = -25; z <= 25; z += 10) {
             const eField = engine.computeElectricFieldAt(x, 2, z);
@@ -173,7 +183,6 @@ export const CircuitLabCanvas: React.FC<CircuitLabCanvasProps> = ({
           }
         }
       } else {
-        // Animate Moving Electrons along wire loop
         const speed = isSwitchClosed ? telemetry.currentAmps * 0.1 : 0;
 
         for (let i = 0; i < numElectrons; i++) {
@@ -185,14 +194,12 @@ export const CircuitLabCanvas: React.FC<CircuitLabCanvasProps> = ({
         }
         electronsMesh.instanceMatrix.needsUpdate = true;
 
-        // Scale Lightbulb Glow based on Power
         if (bulbGlowMeshRef.current) {
           const powerRatio = Math.min(1, telemetry.powerWatts / 20);
           (bulbGlowMeshRef.current.material as THREE.MeshStandardMaterial).emissive = new THREE.Color(0xfacc15);
           (bulbGlowMeshRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = powerRatio * 2;
         }
 
-        // Audio hum matching current flow
         if (isSwitchClosed && telemetry.currentAmps > 0) {
           audioSystem.updateThermalHum(telemetry.currentAmps * 100, 20);
         }
@@ -212,9 +219,27 @@ export const CircuitLabCanvas: React.FC<CircuitLabCanvasProps> = ({
     };
   }, [mode]);
 
+  const handleAddCharge = (type: number) => {
+    engineRef.current.addCharge(Math.random() * 20 - 10, 5, Math.random() * 20 - 10, type);
+  };
+
   return (
     <div className="relative w-full h-full overflow-hidden select-none">
       <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+      {mode === 'ChargesAndFields' && (
+        <div className="absolute top-4 left-4 flex gap-2">
+            <button onClick={() => handleAddCharge(1)} className="px-3 py-1 bg-red-600 text-white rounded shadow text-xs font-bold">+ Positive Charge</button>
+            <button onClick={() => handleAddCharge(-1)} className="px-3 py-1 bg-blue-600 text-white rounded shadow text-xs font-bold">- Negative Charge</button>
+            <button onClick={() => engineRef.current.clearCharges()} className="px-3 py-1 bg-slate-600 text-white rounded shadow text-xs font-bold">Clear All</button>
+        </div>
+      )}
+      {mode !== 'ChargesAndFields' && (
+        <div className="absolute top-4 left-4 flex gap-2">
+            <button onClick={() => setProbePlaced(!probePlaced)} className={`px-3 py-1 text-white rounded shadow text-xs font-bold ${probePlaced?'bg-green-600':'bg-slate-600'}`}>
+                {probePlaced ? "Voltmeter Connected!" : "Snap Voltmeter Probes"}
+            </button>
+        </div>
+      )}
     </div>
   );
 };

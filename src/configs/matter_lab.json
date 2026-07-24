@@ -1,0 +1,57 @@
+{
+  "metadata": {
+    "id": "matter-lab-01",
+    "title": "States of Matter Lab",
+    "subtitle": "Explore phase changes and thermodynamics",
+    "domain": "Thermal",
+    "targetGradeLevel": ["Middle School", "High School"],
+    "version": "1.0.0"
+  },
+  "pedagogy": {
+    "learningObjectives": [
+      "Understand phase transitions at the particulate level.",
+      "Relate temperature to average kinetic energy."
+    ],
+    "prerequisiteConcepts": ["Atoms", "Temperature"],
+    "addressedMisconceptions": ["Particles expand when heated"]
+  },
+  "variables": [
+    {
+      "id": "temp",
+      "name": "Temperature",
+      "symbol": "T",
+      "unit": "K",
+      "min": 0,
+      "max": 1000,
+      "default": 300,
+      "step": 1,
+      "description": "System temperature"
+    }
+  ],
+  "species": [
+    {
+      "id": "h2o",
+      "name": "Water",
+      "formula": "H2O",
+      "mass": 18,
+      "sigma": 3.15,
+      "epsilon": 0.65,
+      "color": "#00aaff",
+      "triplePointTemp": 273.16,
+      "criticalPointTemp": 647.14
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-1",
+      "title": "Boil Water",
+      "prompt": "Increase the temperature until the water turns into a gas.",
+      "targetVariable": "temp",
+      "targetCondition": "gte",
+      "targetValue": 373,
+      "hint": "Water boils at 373K.",
+      "explanation": "At boiling point, the kinetic energy overcomes intermolecular forces.",
+      "completed": false
+    }
+  ]
+}

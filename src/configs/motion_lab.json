@@ -1,0 +1,68 @@
+{
+  "metadata": {
+    "id": "motion-lab-01",
+    "title": "Projectile Motion Lab",
+    "subtitle": "Explore kinematics and trajectories",
+    "domain": "Mechanics",
+    "targetGradeLevel": ["High School"],
+    "version": "1.0.0"
+  },
+  "pedagogy": {
+    "learningObjectives": [
+      "Understand independence of horizontal and vertical motion.",
+      "Predict trajectory of a projectile."
+    ],
+    "prerequisiteConcepts": ["Velocity", "Acceleration", "Gravity"],
+    "addressedMisconceptions": ["Heavier objects fall faster"]
+  },
+  "variables": [
+    {
+      "id": "velocity",
+      "name": "Initial Velocity",
+      "symbol": "v0",
+      "unit": "m/s",
+      "min": 0,
+      "max": 50,
+      "default": 15,
+      "step": 1,
+      "description": "Launch velocity of the projectile"
+    },
+    {
+      "id": "angle",
+      "name": "Launch Angle",
+      "symbol": "theta",
+      "unit": "deg",
+      "min": 0,
+      "max": 90,
+      "default": 45,
+      "step": 1,
+      "description": "Angle of launch from horizontal"
+    }
+  ],
+  "species": [
+    {
+      "id": "cannonball",
+      "name": "Cannonball",
+      "formula": "Fe",
+      "mass": 10,
+      "sigma": 5.0,
+      "epsilon": 1.0,
+      "color": "#444444",
+      "triplePointTemp": 1811,
+      "criticalPointTemp": 8500
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-1",
+      "title": "Hit the Target",
+      "prompt": "Adjust velocity and angle to hit the target at 20m.",
+      "targetVariable": "angle",
+      "targetCondition": "gte",
+      "targetValue": 45,
+      "hint": "45 degrees usually gives maximum range.",
+      "explanation": "Range equation depends on angle.",
+      "completed": false
+    }
+  ]
+}

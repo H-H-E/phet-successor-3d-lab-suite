@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useSimStore } from '../../store/useSimStore';
 import { PhysicsEngine } from '../../engine/PhysicsEngine';
@@ -28,9 +28,12 @@ export const MatterLabCanvas: React.FC = () => {
 
   const instancedMeshRef = useRef<THREE.InstancedMesh | null>(null);
   const containerBoxRef = useRef<THREE.LineSegments | null>(null);
+  const dividerMeshRef = useRef<THREE.Mesh | null>(null);
 
   const previousPhaseRef = useRef<string>('');
   const heatInputRef = useRef<number>(0);
+  const [showPvNrt] = useState(true);
+  const [telemetry, setTelemetry] = useState({ P: 1.0, V: 30*35*30, T: 300, n: 120 });
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -90,6 +93,21 @@ export const MatterLabCanvas: React.FC = () => {
     const glassMesh = new THREE.Mesh(glassGeo, glassMat);
     glassMesh.position.set(0, containerHeight / 2, 0);
     scene.add(glassMesh);
+
+    // Divider wall
+    const dividerGeo = new THREE.BoxGeometry(1, containerHeight, containerDepth);
+    const dividerMat = new THREE.MeshPhysicalMaterial({
+      color: 0xff3333,
+      transparent: true,
+      opacity: 0.5,
+      roughness: 0.5,
+      transmission: 0.2,
+      thickness: 0.5
+    });
+    const dividerMesh = new THREE.Mesh(dividerGeo, dividerMat);
+    dividerMesh.position.set(0, containerHeight / 2, 0);
+    scene.add(dividerMesh);
+    dividerMeshRef.current = dividerMesh;
 
     const maxParticles = 1000;
     const sphereGeo = new THREE.SphereGeometry(0.8, 16, 16);
@@ -199,9 +217,16 @@ export const MatterLabCanvas: React.FC = () => {
 
         telemetryTimer += 0.016;
         if (telemetryTimer >= 1.0) {
-          addTelemetrySnapshot(engine.getTelemetrySnapshot());
+          const snap = engine.getTelemetrySnapshot();
+          addTelemetrySnapshot(snap);
+          setTelemetry({ P: snap.pressureAtm, V: snap.volumeNm3, T: snap.temperatureK, n: snap.particleCount });
           telemetryTimer = 0;
         }
+      }
+
+      if (dividerMeshRef.current) {
+          dividerMeshRef.current.visible = engine.isDividerActive;
+          dividerMeshRef.current.position.x = engine.dividerX;
       }
 
       const particles = engine.particles;
@@ -282,9 +307,26 @@ export const MatterLabCanvas: React.FC = () => {
     engineRef.current.removeParticles(30);
   };
 
+  const toggleDivider = () => {
+      engineRef.current.setDivider(!engineRef.current.isDividerActive, 0);
+  };
+
   return (
     <div className="relative w-full h-full overflow-hidden select-none">
       <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+
+      {/* PV=nRT Inspector */}
+      {showPvNrt && (
+          <div className="absolute top-6 left-6 flex flex-col gap-2 bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-slate-700/60 shadow-xl text-white font-mono text-sm">
+              <h3 className="text-cyan-400 font-bold mb-2">Ideal Gas Law: PV = nRT</h3>
+              <div className="flex justify-between w-48"><span>P (atm):</span> <span>{telemetry.P.toFixed(2)}</span></div>
+              <div className="flex justify-between w-48"><span>V (nm³):</span> <span>{telemetry.V.toFixed(2)}</span></div>
+              <div className="flex justify-between w-48"><span>n (moles):</span> <span>{(telemetry.n/6.022).toFixed(2)}e-23</span></div>
+              <div className="flex justify-between w-48"><span>R (const):</span> <span>0.0821</span></div>
+              <div className="flex justify-between w-48"><span>T (K):</span> <span>{telemetry.T.toFixed(0)}</span></div>
+              <div className="mt-2 text-xs text-slate-400">PV: {(telemetry.P*telemetry.V).toFixed(1)} ≈ nRT: {((telemetry.n/6.022)*0.0821*telemetry.T).toFixed(1)}</div>
+          </div>
+      )}
 
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-slate-900/85 backdrop-blur-md px-6 py-3 rounded-2xl border border-slate-700/60 shadow-2xl">
         <button
@@ -338,6 +380,9 @@ export const MatterLabCanvas: React.FC = () => {
             - Remove 30
           </button>
         </div>
+        <button onClick={toggleDivider} className="mt-2 w-full px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow transition active:scale-95">
+          Toggle Divider
+        </button>
       </div>
     </div>
   );

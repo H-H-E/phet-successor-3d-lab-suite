@@ -1,15 +1,14 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { MotionPhysicsEngine } from '../../engine/MotionPhysicsEngine';
-import type { MotionSubMode } from '../../engine/MotionPhysicsEngine';
 import { audioSystem } from '../../audio/SpatialAudioEngine';
 
 interface MotionLabCanvasProps {
-  mode: MotionSubMode;
+  mode: string;
   appliedForce: number;
   frictionCoeff: number;
   massKg: number;
-  onTelemetryUpdate: (telemetry: ReturnType<MotionPhysicsEngine['step']>) => void;
+  onTelemetryUpdate: (data: any) => void;
 }
 
 export const MotionLabCanvas: React.FC<MotionLabCanvasProps> = ({
@@ -27,19 +26,28 @@ export const MotionLabCanvas: React.FC<MotionLabCanvasProps> = ({
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
 
   const crateMeshRef = useRef<THREE.Mesh | null>(null);
-  const appliedArrowRef = useRef<THREE.ArrowHelper | null>(null);
-  const frictionArrowRef = useRef<THREE.ArrowHelper | null>(null);
-  const netArrowRef = useRef<THREE.ArrowHelper | null>(null);
-
-  const skaterMeshRef = useRef<THREE.Mesh | null>(null);
+  const personMeshRef = useRef<THREE.Mesh | null>(null);
+  const fridgeMeshRef = useRef<THREE.Mesh | null>(null);
+  
   const trackLineRef = useRef<THREE.Line | null>(null);
-
+  const skaterMeshRef = useRef<THREE.Mesh | null>(null);
+  const splineHandlesRef = useRef<THREE.Group | null>(null);
+  
   const sunMeshRef = useRef<THREE.Mesh | null>(null);
   const planetMeshRef = useRef<THREE.Mesh | null>(null);
   const orbitTrailRef = useRef<THREE.Line | null>(null);
   const orbitPointsRef = useRef<THREE.Vector3[]>([]);
 
-  const springBobRef = useRef<THREE.Mesh | null>(null);
+  const springBobRef1 = useRef<THREE.Mesh | null>(null);
+  const springBobRef2 = useRef<THREE.Mesh | null>(null);
+  const pendulumRodRef = useRef<THREE.Mesh | null>(null);
+  const pendulumBobRef = useRef<THREE.Mesh | null>(null);
+
+  const appliedArrowRef = useRef<THREE.ArrowHelper | null>(null);
+  const frictionArrowRef = useRef<THREE.ArrowHelper | null>(null);
+  const netArrowRef = useRef<THREE.ArrowHelper | null>(null);
+
+  const [pushObject, setPushObject] = useState('crate');
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -74,6 +82,7 @@ export const MotionLabCanvas: React.FC<MotionLabCanvasProps> = ({
     const gridHelper = new THREE.GridHelper(100, 20, 0x334155, 0x1e293b);
     scene.add(gridHelper);
 
+    // Forces Mode
     const crateGeo = new THREE.BoxGeometry(3, 3, 3);
     const crateMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.3, metalness: 0.2 });
     const crateMesh = new THREE.Mesh(crateGeo, crateMat);
@@ -81,6 +90,20 @@ export const MotionLabCanvas: React.FC<MotionLabCanvasProps> = ({
     crateMesh.castShadow = true;
     scene.add(crateMesh);
     crateMeshRef.current = crateMesh;
+    
+    const personGeo = new THREE.CylinderGeometry(1, 1, 4);
+    const personMat = new THREE.MeshStandardMaterial({ color: 0xff6666 });
+    const personMesh = new THREE.Mesh(personGeo, personMat);
+    personMesh.position.set(0, 2, 0);
+    scene.add(personMesh);
+    personMeshRef.current = personMesh;
+
+    const fridgeGeo = new THREE.BoxGeometry(2, 5, 2);
+    const fridgeMat = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+    const fridgeMesh = new THREE.Mesh(fridgeGeo, fridgeMat);
+    fridgeMesh.position.set(0, 2.5, 0);
+    scene.add(fridgeMesh);
+    fridgeMeshRef.current = fridgeMesh;
 
     const appArrow = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1.5, 0), 5, 0x22c55e, 1, 0.5);
     const fricArrow = new THREE.ArrowHelper(new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1.5, 0), 5, 0xef4444, 1, 0.5);
@@ -94,13 +117,15 @@ export const MotionLabCanvas: React.FC<MotionLabCanvasProps> = ({
     frictionArrowRef.current = fricArrow;
     netArrowRef.current = netArrow;
 
-    const curve = new THREE.CatmullRomCurve3([
+    // SkatePark Mode
+    const splinePts = [
       new THREE.Vector3(-25, 20, 0),
       new THREE.Vector3(-12, 3, 0),
       new THREE.Vector3(0, 0, 0),
       new THREE.Vector3(12, 6, 0),
       new THREE.Vector3(25, 22, 0)
-    ]);
+    ];
+    const curve = new THREE.CatmullRomCurve3(splinePts);
     const points = curve.getPoints(100);
     const trackGeo = new THREE.BufferGeometry().setFromPoints(points);
     const trackMat = new THREE.LineBasicMaterial({ color: 0x10b981, linewidth: 3 });
@@ -108,12 +133,24 @@ export const MotionLabCanvas: React.FC<MotionLabCanvasProps> = ({
     scene.add(trackLine);
     trackLineRef.current = trackLine;
 
+    const handlesGroup = new THREE.Group();
+    splinePts.forEach(pt => {
+        const hGeo = new THREE.SphereGeometry(0.8);
+        const hMat = new THREE.MeshBasicMaterial({color: 0xff3333});
+        const hMesh = new THREE.Mesh(hGeo, hMat);
+        hMesh.position.copy(pt);
+        handlesGroup.add(hMesh);
+    });
+    scene.add(handlesGroup);
+    splineHandlesRef.current = handlesGroup;
+
     const skaterGeo = new THREE.SphereGeometry(1.2, 32, 32);
     const skaterMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.1, metalness: 0.8 });
     const skaterMesh = new THREE.Mesh(skaterGeo, skaterMat);
     scene.add(skaterMesh);
     skaterMeshRef.current = skaterMesh;
 
+    // Orbits Mode
     const sunGeo = new THREE.SphereGeometry(3, 32, 32);
     const sunMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
     const sunMesh = new THREE.Mesh(sunGeo, sunMat);
@@ -131,11 +168,29 @@ export const MotionLabCanvas: React.FC<MotionLabCanvasProps> = ({
     scene.add(orbitTrail);
     orbitTrailRef.current = orbitTrail;
 
+    // PendulumSpring Mode
     const springBobGeo = new THREE.SphereGeometry(1.5, 32, 32);
-    const springBobMat = new THREE.MeshStandardMaterial({ color: 0xa855f7 });
-    const springBob = new THREE.Mesh(springBobGeo, springBobMat);
-    scene.add(springBob);
-    springBobRef.current = springBob;
+    const springBobMat1 = new THREE.MeshStandardMaterial({ color: 0xa855f7 });
+    const springBobMat2 = new THREE.MeshStandardMaterial({ color: 0xf59e0b });
+    const springBob1 = new THREE.Mesh(springBobGeo, springBobMat1);
+    const springBob2 = new THREE.Mesh(springBobGeo, springBobMat2);
+    scene.add(springBob1);
+    scene.add(springBob2);
+    springBobRef1.current = springBob1;
+    springBobRef2.current = springBob2;
+
+    const pendRodGeo = new THREE.CylinderGeometry(0.1, 0.1, 10);
+    const pendRodMat = new THREE.MeshStandardMaterial({ color: 0x666666 });
+    const pendRod = new THREE.Mesh(pendRodGeo, pendRodMat);
+    pendRod.position.set(10, 5, 0); // Offset to right
+    scene.add(pendRod);
+    pendulumRodRef.current = pendRod;
+
+    const pendBobGeo = new THREE.SphereGeometry(1.0);
+    const pendBobMat = new THREE.MeshStandardMaterial({ color: 0xff3333 });
+    const pendBob = new THREE.Mesh(pendBobGeo, pendBobMat);
+    scene.add(pendBob);
+    pendulumBobRef.current = pendBob;
 
     let isDragging = false;
     let prevX = 0;
@@ -176,10 +231,15 @@ export const MotionLabCanvas: React.FC<MotionLabCanvasProps> = ({
 
     let animId: number;
     const engine = engineRef.current;
+    let time = 0;
 
     const animate = () => {
       animId = requestAnimationFrame(animate);
+      time += 0.016;
 
+      // Update engine
+      // @ts-ignore
+      if (engine.setMode) engine.setMode(mode);
       engine.setAppliedForce(appliedForce);
       engine.setFriction(frictionCoeff);
       engine.setMass(massKg);
@@ -189,22 +249,32 @@ export const MotionLabCanvas: React.FC<MotionLabCanvasProps> = ({
 
       audioSystem.updateThermalHum(telemetry.speed * 20, 10);
 
-      crateMesh.visible = mode === 'Forces';
-      appArrow.visible = mode === 'Forces';
-      fricArrow.visible = mode === 'Forces';
-      netArrow.visible = mode === 'Forces';
+      const isForces = mode === 'Forces';
+      crateMesh.visible = isForces && pushObject === 'crate';
+      personMesh.visible = isForces && pushObject === 'person';
+      fridgeMesh.visible = isForces && pushObject === 'fridge';
+      
+      appArrow.visible = isForces;
+      fricArrow.visible = isForces;
+      netArrow.visible = isForces;
 
       trackLine.visible = mode === 'SkatePark';
       skaterMesh.visible = mode === 'SkatePark';
+      handlesGroup.visible = mode === 'SkatePark';
 
       sunMesh.visible = mode === 'Orbits';
       planetMesh.visible = mode === 'Orbits';
       orbitTrail.visible = mode === 'Orbits';
 
-      springBob.visible = mode === 'PendulumSpring';
+      springBob1.visible = mode === 'PendulumSpring';
+      springBob2.visible = mode === 'PendulumSpring';
+      pendRod.visible = mode === 'PendulumSpring';
+      pendBob.visible = mode === 'PendulumSpring';
 
-      if (mode === 'Forces') {
+      if (isForces) {
         crateMesh.position.x = engine.crateBody.position.x;
+        personMesh.position.x = engine.crateBody.position.x;
+        fridgeMesh.position.x = engine.crateBody.position.x;
 
         const pos = crateMesh.position;
         appArrow.position.set(pos.x, pos.y, pos.z);
@@ -233,7 +303,13 @@ export const MotionLabCanvas: React.FC<MotionLabCanvasProps> = ({
 
         orbitTrail.geometry.setFromPoints(orbitPointsRef.current);
       } else if (mode === 'PendulumSpring') {
-        springBob.position.set(0, 10 + engine.springDisplacement, 0);
+        springBob1.position.set(-5, 10 + engine.springDisplacement, 0);
+        springBob2.position.set(0, 10 + engine.springDisplacement * 1.5, 0); // comparison rig
+
+        const theta = Math.sin(time * 2) * Math.PI / 4;
+        pendRod.rotation.z = theta;
+        pendRod.position.set(10, 10, 0);
+        pendBob.position.set(10 - Math.sin(theta)*5, 10 - Math.cos(theta)*5, 0);
       }
 
       renderer.render(scene, camera);
@@ -251,16 +327,18 @@ export const MotionLabCanvas: React.FC<MotionLabCanvasProps> = ({
       }
       renderer.dispose();
     };
-  }, [mode]);
-
-  useEffect(() => {
-    engineRef.current.setMode(mode);
-    orbitPointsRef.current = [];
-  }, [mode]);
+  }, [mode, pushObject]);
 
   return (
     <div className="relative w-full h-full overflow-hidden select-none">
       <div ref={containerRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+      {mode === 'Forces' && (
+          <div className="absolute top-4 left-4 flex gap-2">
+              <button onClick={() => setPushObject('crate')} className={`px-2 py-1 rounded text-xs ${pushObject==='crate'?'bg-blue-600':'bg-slate-700'}`}>Crate</button>
+              <button onClick={() => setPushObject('person')} className={`px-2 py-1 rounded text-xs ${pushObject==='person'?'bg-blue-600':'bg-slate-700'}`}>Person</button>
+              <button onClick={() => setPushObject('fridge')} className={`px-2 py-1 rounded text-xs ${pushObject==='fridge'?'bg-blue-600':'bg-slate-700'}`}>Fridge</button>
+          </div>
+      )}
     </div>
   );
 };

@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "id": "circuit-lab-01",
+    "title": "Circuit Construction Lab",
+    "subtitle": "Build basic DC circuits",
+    "domain": "Electromagnetism",
+    "targetGradeLevel": ["Middle School", "High School"],
+    "version": "1.0.0"
+  },
+  "pedagogy": {
+    "learningObjectives": [
+      "Understand Ohm's law.",
+      "Calculate series and parallel resistance."
+    ],
+    "prerequisiteConcepts": ["Current", "Voltage", "Resistance"],
+    "addressedMisconceptions": ["Battery provides constant current"]
+  },
+  "variables": [
+    {
+      "id": "voltage",
+      "name": "Battery Voltage",
+      "symbol": "V",
+      "unit": "V",
+      "min": 0,
+      "max": 120,
+      "default": 9,
+      "step": 0.5,
+      "description": "Voltage of the power source"
+    }
+  ],
+  "species": [],
+  "tasks": [
+    {
+      "id": "task-1",
+      "title": "Light the Bulb",
+      "prompt": "Increase the voltage until the bulb lights up.",
+      "targetVariable": "voltage",
+      "targetCondition": "gte",
+      "targetValue": 5,
+      "hint": "Bulbs need at least 5V to visibly glow in this sim.",
+      "explanation": "Higher voltage means more current, resulting in more power dissipated as light.",
+      "completed": false
+    }
+  ]
+}

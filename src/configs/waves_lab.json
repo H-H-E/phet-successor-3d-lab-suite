@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "id": "waves-lab-01",
+    "title": "Wave Interference Lab",
+    "subtitle": "Explore interference patterns",
+    "domain": "Waves",
+    "targetGradeLevel": ["High School"],
+    "version": "1.0.0"
+  },
+  "pedagogy": {
+    "learningObjectives": [
+      "Understand constructive and destructive interference.",
+      "Relate wavelength and frequency."
+    ],
+    "prerequisiteConcepts": ["Amplitude", "Frequency", "Wavelength"],
+    "addressedMisconceptions": ["Waves collide like physical objects"]
+  },
+  "variables": [
+    {
+      "id": "frequency",
+      "name": "Frequency",
+      "symbol": "f",
+      "unit": "Hz",
+      "min": 1,
+      "max": 100,
+      "default": 50,
+      "step": 1,
+      "description": "Frequency of the wave source"
+    }
+  ],
+  "species": [],
+  "tasks": [
+    {
+      "id": "task-1",
+      "title": "Create a standing wave",
+      "prompt": "Adjust the frequency to create a standing wave.",
+      "targetVariable": "frequency",
+      "targetCondition": "eq",
+      "targetValue": 60,
+      "hint": "Try a frequency of 60Hz.",
+      "explanation": "Standing waves form at resonant frequencies.",
+      "completed": false
+    }
+  ]
+}

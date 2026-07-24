@@ -120,6 +120,11 @@ interface SimStoreState {
   toggleAudioMute: () => void;
   ariaAnnouncement: string;
   setAriaAnnouncement: (msg: string) => void;
+
+  highContrastMode: boolean;
+  toggleHighContrastMode: () => void;
+  reducedMotion: boolean;
+  toggleReducedMotion: () => void;
 }
 
 export const useSimStore = create<SimStoreState>((set, get) => ({
@@ -186,5 +191,10 @@ export const useSimStore = create<SimStoreState>((set, get) => ({
   isAudioMuted: false,
   toggleAudioMute: () => set((state) => ({ isAudioMuted: !state.isAudioMuted })),
   ariaAnnouncement: '',
-  setAriaAnnouncement: (msg) => set({ ariaAnnouncement: msg })
+  setAriaAnnouncement: (msg) => set({ ariaAnnouncement: msg }),
+
+  highContrastMode: false,
+  toggleHighContrastMode: () => set((state) => ({ highContrastMode: !state.highContrastMode })),
+  reducedMotion: false,
+  toggleReducedMotion: () => set((state) => ({ reducedMotion: !state.reducedMotion }))
 }));

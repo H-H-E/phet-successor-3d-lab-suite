@@ -6,6 +6,7 @@ import { MatterLabCanvas } from './components/3d/MatterLabCanvas';
 import { GuidedTasksModal } from './components/hud/GuidedTasksModal';
 import { TelemetryPanel } from './components/hud/TelemetryPanel';
 import { LiveAnnouncer } from './components/accessibility/LiveAnnouncer';
+import { useSimStore } from './store/useSimStore';
 
 import { MotionLabApp } from './apps/MotionLabApp';
 import { CircuitLabApp } from './apps/CircuitLabApp';
@@ -20,6 +21,7 @@ export function App() {
   const [activeLab, setActiveLab] = useState<MasterLabType>('MatterLab');
   const [isTasksOpen, setIsTasksOpen] = useState(false);
   const [isTelemetryOpen, setIsTelemetryOpen] = useState(false);
+  const { highContrastMode, reducedMotion } = useSimStore();
 
   if (activeLab === 'MotionLab') {
     return <MotionLabApp onBackToLabMenu={() => setActiveLab('MatterLab')} />;
@@ -35,7 +37,7 @@ export function App() {
   }
 
   return (
-    <div className="w-screen h-screen bg-slate-950 text-slate-100 flex flex-col font-sans overflow-hidden select-none">
+    <div className={`w-screen h-screen bg-slate-950 text-slate-100 flex flex-col font-sans overflow-hidden select-none ${highContrastMode ? 'contrast-150' : ''} ${reducedMotion ? 'motion-reduce' : ''}`}>
       {/* Top Navigation */}
       <HeaderNav
         onToggleTasks={() => setIsTasksOpen(true)}

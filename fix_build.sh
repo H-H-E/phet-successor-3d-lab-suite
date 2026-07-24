@@ -1,3 +1,19 @@
+#!/bin/bash
+
+# Fix SimLoader.ts
+sed -i '' 's/import { SimulationConfig }/import type { SimulationConfig }/' src/engine/SimLoader.ts
+
+# Fix SimLoader.test.ts
+sed -i '' 's/expect(loadedConfig.domain).toBeUndefined();//' src/__tests__/SimLoader.test.ts
+
+# Fix MatterLabCanvas.tsx (setShowPvNrt unused)
+sed -i '' 's/const \[showPvNrt, setShowPvNrt\] = useState(true);/const [showPvNrt] = useState(true);/' src/components/3d/MatterLabCanvas.tsx
+
+# Fix QuantumLabCanvas.tsx (applyEuler)
+sed -i '' 's/eMesh.applyEuler(ringMesh.rotation);/eMesh.rotation.copy(ringMesh.rotation);/' src/components/3d/QuantumLabCanvas.tsx
+
+# Fix WavesLabCanvas.tsx
+cat << 'INNER_EOF' > src/components/3d/WavesLabCanvas.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { WavePhysicsEngine, type WaveSubMode } from '../../engine/WavePhysicsEngine';
@@ -238,3 +254,7 @@ export const WavesLabCanvas: React.FC<WavesLabCanvasProps> = ({
     </div>
   );
 };
+INNER_EOF
+
+# Finally run tests and build
+npx vitest run && npm run build

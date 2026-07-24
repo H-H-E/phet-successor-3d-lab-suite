@@ -1,8 +1,9 @@
 import React from 'react';
-import { Volume2, VolumeX, Flame, Activity, HelpCircle } from 'lucide-react';
+import { Volume2, VolumeX, Flame, Activity, HelpCircle, Globe, Eye, ZapOff } from 'lucide-react';
 import { useSimStore } from '../../store/useSimStore';
 import type { LabMode } from '../../store/useSimStore';
 import { audioSystem } from '../../audio/SpatialAudioEngine';
+import { useTranslation } from 'react-i18next';
 
 interface HeaderNavProps {
   onToggleTasks: () => void;
@@ -10,7 +11,8 @@ interface HeaderNavProps {
 }
 
 export const HeaderNav: React.FC<HeaderNavProps> = ({ onToggleTasks, onToggleTelemetry }) => {
-  const { labMode, setLabMode, isAudioMuted, toggleAudioMute, tasks } = useSimStore();
+  const { labMode, setLabMode, isAudioMuted, toggleAudioMute, tasks, highContrastMode, toggleHighContrastMode, reducedMotion, toggleReducedMotion } = useSimStore();
+  const { t, i18n } = useTranslation();
 
   const handleAudioToggle = () => {
     audioSystem.init();
@@ -44,7 +46,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ onToggleTasks, onToggleTel
       <nav className="flex items-center gap-1 bg-slate-950/70 p-1 rounded-xl border border-slate-800">
         {(['PhaseStates', 'GasLaws', 'Diffusion'] as LabMode[]).map((mode) => {
           const isActive = labMode === mode;
-          const label = mode === 'PhaseStates' ? 'Phase Dynamics' : mode === 'GasLaws' ? 'Gas Laws (PV=nRT)' : 'Diffusion';
+          const label = t(`labTitles.${mode}`);
           return (
             <button
               key={mode}
@@ -63,13 +65,54 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ onToggleTasks, onToggleTel
 
       {/* Action Toolbar */}
       <div className="flex items-center gap-3">
+        {/* Lang Selector */}
+        <div className="flex items-center gap-1 bg-slate-800 px-2 py-1.5 rounded-xl border border-slate-700/60">
+          <Globe className="w-4 h-4 text-slate-400" />
+          <select 
+            className="bg-transparent text-xs text-slate-200 outline-none cursor-pointer"
+            onChange={(e) => i18n.changeLanguage(e.target.value)}
+            value={i18n.language}
+          >
+            <option value="en">EN</option>
+            <option value="es">ES</option>
+            <option value="fr">FR</option>
+            <option value="zh">ZH</option>
+          </select>
+        </div>
+
+        {/* High Contrast Toggle */}
+        <button
+          onClick={toggleHighContrastMode}
+          className={`p-2 rounded-xl border transition active:scale-95 ${
+            highContrastMode
+              ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+              : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+          }`}
+          title={t('ui.highContrast')}
+        >
+          <Eye className="w-4 h-4" />
+        </button>
+
+        {/* Reduced Motion Toggle */}
+        <button
+          onClick={toggleReducedMotion}
+          className={`p-2 rounded-xl border transition active:scale-95 ${
+            reducedMotion
+              ? 'bg-purple-500/20 text-purple-400 border-purple-500/30'
+              : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+          }`}
+          title={t('ui.reducedMotion')}
+        >
+          <ZapOff className="w-4 h-4" />
+        </button>
+
         {/* Guided Tasks Button */}
         <button
           onClick={onToggleTasks}
           className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700/80 text-slate-200 border border-slate-700/60 rounded-xl text-xs font-medium transition active:scale-95 relative"
         >
           <HelpCircle className="w-4 h-4 text-sky-400" />
-          <span>Tasks</span>
+          <span>{t('ui.guidedTasks')}</span>
           <span className="ml-1 bg-sky-500 text-slate-950 font-bold text-[10px] px-1.5 py-0.2 rounded-full">
             {completedCount}/{tasks.length}
           </span>
@@ -92,7 +135,7 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({ onToggleTasks, onToggleTel
               ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
               : 'bg-slate-800 text-sky-400 border-slate-700 hover:bg-slate-700'
           }`}
-          title={isAudioMuted ? 'Unmute Spatial Audio' : 'Mute Spatial Audio'}
+          title={isAudioMuted ? t('ui.unmute') : t('ui.mute')}
         >
           {isAudioMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>

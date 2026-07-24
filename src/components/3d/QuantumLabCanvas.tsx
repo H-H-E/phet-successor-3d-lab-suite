@@ -108,7 +108,6 @@ export const QuantumLabCanvas: React.FC<QuantumLabCanvasProps> = ({
       alphaBeam.visible = mode === 'RutherfordScattering';
 
       if (mode === 'BuildAtom') {
-        // Rebuild Nucleus Spheres (Protons Red, Neutrons Grey)
         nucleusGroup.clear();
 
         const pGeo = new THREE.SphereGeometry(0.8, 16, 16);
@@ -137,28 +136,49 @@ export const QuantumLabCanvas: React.FC<QuantumLabCanvasProps> = ({
           nucleusGroup.add(nMesh);
         }
 
-        // Rebuild Orbital Rings & Moving Electron Spheres
         orbitalRingsGroup.clear();
+        
+        // Bohr 2n^2 shells
+        let remainingElectrons = electrons;
+        let n = 1;
+        while (remainingElectrons > 0 && n <= 7) {
+            const capacity = 2 * n * n;
+            const shellElectrons = Math.min(capacity, remainingElectrons);
+            const radius = 4 * n;
 
-        const ringRadius = 12;
-        const ringGeo = new THREE.RingGeometry(ringRadius - 0.1, ringRadius + 0.1, 64);
-        ringGeo.rotateX(Math.PI / 2);
-        const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide });
-        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-        orbitalRingsGroup.add(ringMesh);
+            // Probability Cloud
+            const cloudGeo = new THREE.SphereGeometry(radius, 32, 32);
+            const cloudMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.05, side: THREE.DoubleSide });
+            orbitalRingsGroup.add(new THREE.Mesh(cloudGeo, cloudMat));
 
-        // Orbiting Electron Spheres
-        const eGeo = new THREE.SphereGeometry(0.6, 16, 16);
-        const eMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+            // Orbital Ring
+            const ringGeo = new THREE.RingGeometry(radius - 0.1, radius + 0.1, 64);
+            ringGeo.rotateX(Math.PI / 2);
+            const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
+            const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+            
+            // Randomize ring rotation for 3D look
+            ringMesh.rotation.x = Math.PI / 2 + (n * 0.2);
+            ringMesh.rotation.y = n * 0.5;
+            orbitalRingsGroup.add(ringMesh);
 
-        for (let i = 0; i < electrons; i++) {
-          const eMesh = new THREE.Mesh(eGeo, eMat);
-          const theta = angleTime + (i * (2 * Math.PI)) / Math.max(1, electrons);
-          eMesh.position.set(Math.cos(theta) * ringRadius, 0, Math.sin(theta) * ringRadius);
-          orbitalRingsGroup.add(eMesh);
+            // Electrons
+            const eGeo = new THREE.SphereGeometry(0.6, 16, 16);
+            const eMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+            for (let i = 0; i < shellElectrons; i++) {
+                const eMesh = new THREE.Mesh(eGeo, eMat);
+                const theta = angleTime / n + (i * (2 * Math.PI)) / shellElectrons;
+                eMesh.position.set(Math.cos(theta) * radius, 0, Math.sin(theta) * radius);
+                // Apply same rotation as ring
+                eMesh.position.applyEuler(ringMesh.rotation);
+                orbitalRingsGroup.add(eMesh);
+            }
+
+            remainingElectrons -= shellElectrons;
+            n++;
         }
       } else {
-        // Rutherford Deflection Trajectory
         const deflAngle = engine.computeRutherfordDeflection(2.0);
         const rad = (deflAngle * Math.PI) / 180;
 

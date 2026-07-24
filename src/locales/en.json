@@ -1,0 +1,18 @@
+{
+  "labTitles": {
+    "PhaseStates": "Phase States",
+    "GasLaws": "Gas Laws",
+    "Diffusion": "Diffusion"
+  },
+  "ui": {
+    "play": "Play",
+    "pause": "Pause",
+    "reset": "Reset",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "guidedTasks": "Guided Tasks",
+    "highContrast": "High Contrast",
+    "reducedMotion": "Reduced Motion",
+    "language": "Language"
+  }
+}
